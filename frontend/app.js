@@ -37,27 +37,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindDashboardControls();
   bindDrawerControls();
   bindReportControls();
+  bindPredictSandbox();
 
   // Initial View
   switchView('home');
 });
 
 /**
- * Loads shared state data from state.json with fallback to state_data.js
+ * Loads shared state data from FastAPI backend with fallback to state.json & state_data.js
  */
 async function loadStateData() {
   try {
-    const response = await fetch('state.json');
-    if (!response.ok) throw new Error('Network fetch failed');
-    appState = await response.json();
-    console.log('Loaded appState via fetch:', appState);
-  } catch (err) {
-    console.warn('Fetch failed, falling back to window.DEFAULT_STATE:', err);
-    if (window.DEFAULT_STATE) {
-      appState = window.DEFAULT_STATE;
-    } else {
-      console.error('Fatal: No state data available!');
-      return;
+    const apiRes = await fetch('http://localhost:8000/state');
+    if (!apiRes.ok) throw new Error(`API returned status ${apiRes.status}`);
+    appState = await apiRes.json();
+    console.log('[OK] Loaded live appState from FastAPI backend (/state):', appState);
+  } catch (apiErr) {
+    console.warn('Live API unavailable, attempting local state.json fallback:', apiErr);
+    try {
+      const response = await fetch('state.json');
+      if (!response.ok) throw new Error('Local fetch failed');
+      appState = await response.json();
+      console.log('Loaded appState via local state.json fallback:', appState);
+    } catch (err) {
+      console.warn('Local state.json failed, falling back to window.DEFAULT_STATE:', err);
+      if (window.DEFAULT_STATE) {
+        appState = window.DEFAULT_STATE;
+      } else {
+        console.error('Fatal: No state data available!');
+        return;
+      }
     }
   }
 
@@ -554,7 +563,7 @@ function renderSettlements(tKey) {
 function renderGroundReports(tKey) {
   reportLayerGroup.clearLayers();
   const reports = appState.ground_reports || [];
-  const currentReports = reports.filter(g => g.timestep === tKey);
+  const currentReports = reports.filter(g => g.timestep === tKey || (g.active_timesteps && g.active_timesteps.includes(tKey)));
 
   currentReports.forEach(g => {
     const s = appState.settlements.find(item => item.id === g.settlement_id);
@@ -570,10 +579,13 @@ function renderGroundReports(tKey) {
       iconAnchor: [10, 10]
     });
 
+    const isSim = g.is_simulated ? '<span style="display:inline-block; padding:1px 5px; background:rgba(245,158,11,0.2); border:1px solid #f59e0b; border-radius:4px; font-size:9.5px; color:#f59e0b; margin-bottom:4px;">SIMULATED CITIZEN REPORT</span><br>' : '';
+
     const marker = L.marker([lat, lng], { icon: reportIcon });
     marker.bindTooltip(`
-      <div style="font-size:11px; max-width:200px;">
-        <strong style="color:#f59e0b;">Ground Report (${g.type})</strong><br>
+      <div style="font-size:11px; max-width:220px; line-height:1.4;">
+        ${isSim}
+        <strong style="color:#f59e0b;">Report: ${g.type.replace('_', ' ').toUpperCase()}</strong><br>
         ${g.text}
       </div>
     `, { className: 'custom-map-tooltip' });
@@ -1191,3 +1203,97 @@ function bindReportControls() {
     window.print();
   });
 }
+
+// ============================================================================
+// 7. Interactive Live Predict Sandbox Controller
+// ============================================================================
+function bindPredictSandbox() {
+  const btnRun = document.getElementById('btn-run-live-predict');
+  const btnPresetFalseAlarm = document.getElementById('btn-preset-false-alarm');
+  const btnPresetSevere = document.getElementById('btn-preset-severe-surge');
+
+  const inRain = document.getElementById('predict-input-rain');
+  const inElev = document.getElementById('predict-input-elev');
+  const inDist = document.getElementById('predict-input-dist');
+  const inHist = document.getElementById('predict-input-hist');
+
+  const resBox = document.getElementById('predict-result-box');
+  const resBadge = document.getElementById('predict-res-badge');
+  const resScore = document.getElementById('predict-res-score');
+  const resConf = document.getElementById('predict-res-conf');
+  const resRationale = document.getElementById('predict-res-rationale');
+
+  btnPresetFalseAlarm?.addEventListener('click', () => {
+    if (inRain) inRain.value = '290';
+    if (inElev) inElev.value = '860';
+    if (inDist) inDist.value = '22.0';
+    if (inHist) inHist.value = '0';
+    btnRun?.click();
+  });
+
+  btnPresetSevere?.addEventListener('click', () => {
+    if (inRain) inRain.value = '350';
+    if (inElev) inElev.value = '720';
+    if (inDist) inDist.value = '0.5';
+    if (inHist) inHist.value = '1';
+    btnRun?.click();
+  });
+
+  btnRun?.addEventListener('click', async () => {
+    const payload = {
+      rainfall_mm: parseFloat(inRain?.value || 300),
+      elevation_m: parseFloat(inElev?.value || 750),
+      distance_to_river_km: parseFloat(inDist?.value || 1.0),
+      historical_flood_flag: parseInt(inHist?.value || 0, 10),
+      settlement_name: 'Custom Judge Scenario'
+    };
+
+    btnRun.disabled = true;
+    btnRun.textContent = 'Querying Trained Random Forest...';
+
+    try {
+      const resp = await fetch('http://localhost:8000/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+      const data = await resp.json();
+
+      if (resBox && resBadge && resScore && resConf && resRationale) {
+        resBox.style.display = 'block';
+        const level = data.prediction.risk_level.toLowerCase();
+        resBadge.className = `risk-badge ${level}`;
+        resBadge.textContent = level.toUpperCase();
+        resScore.textContent = data.prediction.risk_score.toFixed(4);
+        resConf.textContent = `${Math.round(data.prediction.confidence * 100)}%`;
+        resRationale.textContent = data.explainability.hydrology_rationale;
+      }
+    } catch (err) {
+      console.warn('Live /predict endpoint unavailable, calculating via client hydrology heuristic:', err);
+      // Fallback local heuristic
+      const r_norm = Math.min(1.0, payload.rainfall_mm / 350.0);
+      const e_norm = Math.max(0.0, Math.min(1.0, (payload.elevation_m - 700) / 250));
+      const d_norm = Math.max(0.0, Math.min(1.0, payload.distance_to_river_km / 20.0));
+      const h_flag = payload.historical_flood_flag;
+
+      const score = Math.min(1.0, Math.max(0.0, (r_norm * 0.35) + ((1 - e_norm) * 0.30) + ((1 - d_norm) * 0.20) + (h_flag * 0.15)));
+      const level = score > 0.66 ? 'high' : (score >= 0.33 ? 'medium' : 'low');
+      const conf = Math.abs(score - 0.5) * 2;
+
+      if (resBox && resBadge && resScore && resConf && resRationale) {
+        resBox.style.display = 'block';
+        resBadge.className = `risk-badge ${level}`;
+        resBadge.textContent = level.toUpperCase();
+        resScore.textContent = score.toFixed(4);
+        resConf.textContent = `${Math.round(conf * 100)}%`;
+        resRationale.textContent = `Client Fallback Calculation: Rain ${payload.rainfall_mm}mm, Elev ${payload.elevation_m}m, River ${payload.distance_to_river_km}km.`;
+      }
+    } finally {
+      btnRun.disabled = false;
+      btnRun.innerHTML = '<span>Run Real-Time ML Inference &rarr;</span>';
+    }
+  });
+}
+

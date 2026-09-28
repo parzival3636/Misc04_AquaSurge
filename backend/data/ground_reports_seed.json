@@ -1,0 +1,56 @@
+[
+  {
+    "id": "G01",
+    "settlement_id": "S15",
+    "road_id": "R16",
+    "timestep": "T4",
+    "type": "flooded_road",
+    "text": "Flash flood across Padinjarathara-Panamaram link road near reservoir canal.",
+    "is_simulated": true
+  },
+  {
+    "id": "G02",
+    "settlement_id": "S11",
+    "road_id": "R04",
+    "timestep": "T1",
+    "type": "stranded_people",
+    "text": "Estate workers stranded near Meppadi stream crossing after heavy rainfall.",
+    "is_simulated": true
+  },
+  {
+    "id": "G03",
+    "settlement_id": "S08",
+    "road_id": "R12",
+    "timestep": "T3",
+    "type": "flooded_road",
+    "text": "Forest route causeway inundated with 0.3m water near Noolpuzha.",
+    "is_simulated": true
+  },
+  {
+    "id": "G04",
+    "settlement_id": "S04",
+    "road_id": "R17",
+    "timestep": "T4",
+    "type": "flooded_road",
+    "text": "Panamaram River breached bank. Causeway flooded under 0.8m water.",
+    "is_simulated": true
+  },
+  {
+    "id": "G05",
+    "settlement_id": "S01",
+    "road_id": null,
+    "timestep": "T5",
+    "type": "stranded_people",
+    "text": "45 residents stranded near Mananthavady low-lying bus stand. NDRF deployed.",
+    "is_simulated": true
+  },
+  {
+    "id": "G06",
+    "settlement_id": "S06",
+    "road_id": "R09",
+    "timestep": "T6",
+    "type": "other",
+    "text": "Runoff water accumulating near agricultural research station; culvert partially choked.",
+    "is_simulated": true
+  }
+]

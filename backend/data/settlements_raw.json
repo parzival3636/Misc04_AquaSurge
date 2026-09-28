@@ -1,0 +1,146 @@
+[
+  {
+    "id": "S01",
+    "name": "Mananthavady",
+    "taluk": "Mananthavady",
+    "population": 32000,
+    "lat": 11.8298756,
+    "lng": 75.9418934
+  },
+  {
+    "id": "S02",
+    "name": "Thirunelli",
+    "taluk": "Mananthavady",
+    "population": 12500,
+    "lat": 11.9098981,
+    "lng": 75.994875
+  },
+  {
+    "id": "S03",
+    "name": "Thavinhal",
+    "taluk": "Mananthavady",
+    "population": 18200,
+    "lat": 11.8369741,
+    "lng": 75.8855607
+  },
+  {
+    "id": "S04",
+    "name": "Panamaram",
+    "taluk": "Mananthavady",
+    "population": 30000,
+    "lat": 11.7390969,
+    "lng": 76.0731104
+  },
+  {
+    "id": "S05",
+    "name": "Sulthan Bathery",
+    "taluk": "Sulthan Bathery",
+    "population": 48000,
+    "lat": 11.7263962,
+    "lng": 76.3279924
+  },
+  {
+    "id": "S06",
+    "name": "Ambalavayal",
+    "taluk": "Sulthan Bathery",
+    "population": 22000,
+    "lat": 11.6192026,
+    "lng": 76.2120176
+  },
+  {
+    "id": "S07",
+    "name": "Nenmeni",
+    "taluk": "Sulthan Bathery",
+    "population": 27500,
+    "lat": 11.6128349,
+    "lng": 76.2757054
+  },
+  {
+    "id": "S08",
+    "name": "Noolpuzha",
+    "taluk": "Sulthan Bathery",
+    "population": 19000,
+    "lat": 11.6079535,
+    "lng": 76.3700688
+  },
+  {
+    "id": "S09",
+    "name": "Kalpetta",
+    "taluk": "Vythiri",
+    "population": 36000,
+    "lat": 11.610278,
+    "lng": 76.08281
+  },
+  {
+    "id": "S10",
+    "name": "Vythiri",
+    "taluk": "Vythiri",
+    "population": 21000,
+    "lat": 11.5560885,
+    "lng": 76.038922
+  },
+  {
+    "id": "S11",
+    "name": "Meppadi",
+    "taluk": "Vythiri",
+    "population": 29000,
+    "lat": 11.5529455,
+    "lng": 76.1320079
+  },
+  {
+    "id": "S12",
+    "name": "Lakkidi",
+    "taluk": "Vythiri",
+    "population": 8500,
+    "lat": 11.5205672,
+    "lng": 76.0203502
+  },
+  {
+    "id": "S13",
+    "name": "Chundale",
+    "taluk": "Vythiri",
+    "population": 14500,
+    "lat": 11.5740364,
+    "lng": 76.0591416
+  },
+  {
+    "id": "S14",
+    "name": "Kaniyambetta",
+    "taluk": "Vythiri",
+    "population": 24000,
+    "lat": 11.6953621,
+    "lng": 76.0807517
+  },
+  {
+    "id": "S15",
+    "name": "Padinjarathara",
+    "taluk": "Vythiri",
+    "population": 16500,
+    "lat": 11.6686805,
+    "lng": 75.9615174
+  },
+  {
+    "id": "S16",
+    "name": "Pulpally",
+    "taluk": "Sulthan Bathery",
+    "population": 25000,
+    "lat": 11.7932652,
+    "lng": 76.1643871
+  },
+  {
+    "id": "S17",
+    "name": "Muttil",
+    "taluk": "Vythiri",
+    "population": 20000,
+    "lat": 11.6418431,
+    "lng": 76.110624
+  },
+  {
+    "id": "S18",
+    "name": "Kottathara",
+    "taluk": "Vythiri",
+    "population": 11000,
+    "lat": 11.6650598,
+    "lng": 76.0416419
+  }
+]

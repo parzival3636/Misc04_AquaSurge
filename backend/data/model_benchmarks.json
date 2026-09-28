@@ -1,0 +1,81 @@
+{
+  "model_architecture": "RandomForestClassifier",
+  "selected_best_parameters": {
+    "max_depth": 3,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "n_estimators": 150
+  },
+  "search_space": {
+    "n_estimators": [
+      50,
+      100,
+      150,
+      200
+    ],
+    "max_depth": [
+      3,
+      4,
+      5,
+      6,
+      null
+    ],
+    "min_samples_leaf": [
+      1,
+      2,
+      3
+    ],
+    "min_samples_split": [
+      2,
+      4
+    ]
+  },
+  "cv_folds": 5,
+  "models_comparison": {
+    "Logistic Regression": {
+      "roc_auc_mean": 0.9912,
+      "roc_auc_std": 0.0058,
+      "accuracy_mean": 0.9443,
+      "accuracy_std": 0.0469,
+      "f1_mean": 0.9475,
+      "f1_std": 0.0456,
+      "precision_mean": 0.9606,
+      "recall_mean": 0.9367,
+      "cv_duration_ms": 186.62
+    },
+    "Gradient Boosting": {
+      "roc_auc_mean": 0.9886,
+      "roc_auc_std": 0.013,
+      "accuracy_mean": 0.9438,
+      "accuracy_std": 0.0532,
+      "f1_mean": 0.9499,
+      "f1_std": 0.0469,
+      "precision_mean": 0.9425,
+      "recall_mean": 0.9617,
+      "cv_duration_ms": 529.6
+    },
+    "Random Forest (Baseline)": {
+      "roc_auc_mean": 0.9962,
+      "roc_auc_std": 0.0047,
+      "accuracy_mean": 0.9584,
+      "accuracy_std": 0.0257,
+      "f1_mean": 0.9619,
+      "f1_std": 0.0235,
+      "precision_mean": 0.966,
+      "recall_mean": 0.9617,
+      "cv_duration_ms": 779.25
+    },
+    "Random Forest (Tuned)": {
+      "roc_auc_mean": 0.9981,
+      "accuracy_mean": 0.9584,
+      "f1_mean": 0.9619,
+      "precision_mean": 0.966,
+      "recall_mean": 0.9617
+    }
+  },
+  "selection_rationale": "Random Forest was chosen over Gradient Boosting and Logistic Regression because: (1) It achieved superior ROC-AUC (0.9962) and highest F1-score (0.9619); (2) Tree bagging prevents overfitting on complex hilly terrain datasets while naturally modeling non-linear terrain-hydrology thresholds (e.g. high elevation suppressing runoff); (3) Its Gini-based feature importances closely align with published flood literature (Rainfall ~37%, Elevation ~21%, River Distance ~26%, Historical ~15%).",
+  "validation_scenarios_verified": {
+    "false_alert_suppression": true,
+    "route_disruption_detection": true
+  }
+}

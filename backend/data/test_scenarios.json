@@ -1,0 +1,39 @@
+{
+  "false_alert_case": {
+    "title": "False-Alert Suppression Test",
+    "description": "Nenmeni at T8 -- high rainfall (291.9mm) but high elevation (862.0m) and far from river (21.93km)",
+    "settlement_id": "S07",
+    "timestep": "T8",
+    "input_conditions": {
+      "rainfall_mm": 291.9,
+      "elevation_m": 862.0,
+      "distance_to_river_km": 21.93,
+      "historical_flood_flag": 0
+    },
+    "model_output": {
+      "risk_score": 0.076,
+      "risk_level": "low",
+      "threshold_for_high": "> 0.66"
+    },
+    "result": "Model correctly withheld high-risk alert (score=0.076 < 0.66). High elevation (862.0m) and river distance (21.93km) suppressed false alarm despite 291.9mm rainfall.",
+    "passed": true
+  },
+  "route_disruption_case": {
+    "title": "Dynamic Network Disruption & Rerouting Test",
+    "description": "Mananthavady at T7 -- flagged high risk, expected to trigger road closures",
+    "settlement_id": "S01",
+    "timestep": "T7",
+    "input_conditions": {
+      "rainfall_mm": 305.2,
+      "elevation_m": 801.0,
+      "distance_to_river_km": 3.93,
+      "historical_flood_flag": 1
+    },
+    "model_output": {
+      "risk_score": 1.0,
+      "risk_level": "high"
+    },
+    "result": "risk_level = high, risk_score = 1.000. Settlement correctly flagged high -- road closures expected on connecting roads.",
+    "passed": true
+  }
+}
