@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wayanad Flood Coordination & Warning Platform | MISC-04</title>
-  
+
   <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
   <!-- Warm Cartographic Design System -->
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="theme-light-beige">
 
   <!-- ========================================================================= -->
@@ -24,8 +29,9 @@
   <nav id="top-navbar" class="top-nav glass-panel" style="display: none;">
     <div class="nav-left">
       <div class="nav-logo" id="nav-btn-home" title="Return to Overview">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
       </div>
       <div class="nav-title-block">
@@ -37,30 +43,49 @@
     <!-- Navigation Tabs -->
     <div class="nav-tabs">
       <button class="nav-tab active" data-view="dashboard" id="tab-dashboard">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+        </svg>
         <span>Spatial Operations</span>
       </button>
 
       <button class="nav-tab" data-view="validation" id="tab-validation">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
         <span>Model Benchmarks</span>
         <span class="tab-pass-pill">2/2 Verified</span>
       </button>
 
       <button class="nav-tab" data-view="report" id="tab-report">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
         <span>SitRep Document</span>
       </button>
     </div>
 
     <div class="nav-right">
       <button id="btn-quick-report" class="action-btn-primary" title="Generate snapshot report at current timestep">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon
+            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
         <span>Print SitRep</span>
       </button>
 
       <button id="nav-btn-replay" class="glass-icon-btn" title="Replay Calibration Pipeline">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3" />
+        </svg>
       </button>
 
       <!-- Permanent Replayed Data Badge -->
@@ -87,23 +112,34 @@
 
       <h1 class="home-title">Local Disaster Warning &amp; Response Coordination</h1>
       <p class="home-tagline">
-        An evidence-backed flood intelligence engine calibrated on authentic IMD telemetry, Open-Elevation terrain gradients, and OpenStreetMap road connectivity from the historic August 2018 Wayanad floods.
+        An evidence-backed flood intelligence engine calibrated on authentic IMD telemetry, Open-Elevation terrain
+        gradients, and OpenStreetMap road connectivity from the historic August 2018 Wayanad floods.
       </p>
 
       <!-- Real Data Stat Chips (Traced from appState) -->
       <div class="home-stat-chips">
         <div class="stat-chip">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
           <span id="home-stat-settlements" class="tab-num">15 settlements</span>
         </div>
 
         <div class="stat-chip">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="6" cy="6" r="3" />
+            <circle cx="18" cy="18" r="3" />
+            <line x1="8.5" y1="8.5" x2="15.5" y2="15.5" />
+          </svg>
           <span id="home-stat-roads" class="tab-num">19 arterial roads</span>
         </div>
 
         <div class="stat-chip highlight">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
           <span id="home-stat-event" class="tab-num">August 2018 Monsoon Surge</span>
         </div>
       </div>
@@ -112,7 +148,9 @@
       <div class="home-cta-row">
         <button id="btn-launch-model" class="warm-launch-btn">
           <span>Initialize Coordination Model</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </button>
       </div>
 
@@ -120,17 +158,24 @@
       <div class="how-it-works-block">
         <button id="btn-toggle-explainer" class="explainer-toggle-link">
           <span>Technical Architecture &amp; Methodology</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
         <div id="home-explainer-content" class="explainer-content" style="display: none;">
           <p>
-            <strong>Physics-Informed Weighting:</strong> Flood susceptibility is derived using published Western Ghats literature weights (35% rainfall, 30% elevation gradient, 20% Kabini river proximity, 15% historical recurrence), not ungrounded black-box claims.
+            <strong>Physics-Informed Weighting:</strong> Flood susceptibility is derived using published Western Ghats
+            literature weights (35% rainfall, 30% elevation gradient, 20% Kabini river proximity, 15% historical
+            recurrence), not ungrounded black-box claims.
           </p>
           <p>
-            <strong>Dynamic Road Topology:</strong> Road statuses are derived deterministically: roads close when either connecting node crosses the critical flood threshold or when ground reports confirm causeway submersion.
+            <strong>Dynamic Road Topology:</strong> Road statuses are derived deterministically: roads close when either
+            connecting node crosses the critical flood threshold or when ground reports confirm causeway submersion.
           </p>
           <p>
-            <strong>Evidence-First Alerts:</strong> Every alert carries traceable telemetry (rainfall mm, elevation m, river distance km, active ground reports) so commanders immediately understand why a settlement is prioritized.
+            <strong>Evidence-First Alerts:</strong> Every alert carries traceable telemetry (rainfall mm, elevation m,
+            river distance km, active ground reports) so commanders immediately understand why a settlement is
+            prioritized.
           </p>
         </div>
       </div>
@@ -248,8 +293,10 @@
 
       <!-- Live computed stat line from Section 7 -->
       <div class="live-stat-line">
-        <span id="stat-high-risk" class="stat-highlight red tab-num">0</span> of <span id="stat-total-settlements" class="tab-num">15</span> high-risk &bull;
-        <span id="stat-roads-closed" class="stat-highlight red tab-num">0</span> of <span id="stat-total-roads" class="tab-num">19</span> roads closed &bull;
+        <span id="stat-high-risk" class="stat-highlight red tab-num">0</span> of <span id="stat-total-settlements"
+          class="tab-num">15</span> high-risk &bull;
+        <span id="stat-roads-closed" class="stat-highlight red tab-num">0</span> of <span id="stat-total-roads"
+          class="tab-num">19</span> roads closed &bull;
         <span id="stat-active-reports" class="stat-highlight amber tab-num">0</span> ground reports
       </div>
 
@@ -292,7 +339,8 @@
       <div class="safe-route-status-card" id="safe-route-info-box">
         <div class="safe-route-header">
           <span class="safe-route-title">SAFE EVACUATION PATHFINDER</span>
-          <span class="heuristic-tag" title="Heuristic shortest-path over open roads — not an official evacuation order">ⓘ Heuristic</span>
+          <span class="heuristic-tag"
+            title="Heuristic shortest-path over open roads — not an official evacuation order">ⓘ Heuristic</span>
         </div>
         <div id="safe-route-detail" class="safe-route-body">
           Click any affected settlement on the map to trace safe passage to refuge.
@@ -305,19 +353,31 @@
       <div class="timeline-header-row">
         <div class="timeline-status-block">
           <span class="step-badge" id="step-badge-current">T1</span>
-          <span id="timestep-readout" class="step-readout tab-num">T1 — Monsoon onset &bull; Inflow normal across taluks</span>
+          <span id="timestep-readout" class="step-readout tab-num">T1 — Monsoon onset &bull; Inflow normal across
+            taluks</span>
         </div>
 
         <div class="playback-controls">
           <button id="btn-step-prev" class="play-btn" title="Previous Timestep">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="19 20 9 12 19 4 19 20" />
+              <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5" />
+            </svg>
           </button>
           <button id="btn-play-pause" class="play-btn primary" title="Auto-Play 8 Timesteps">
-            <svg id="icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <svg id="icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            <svg id="icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <svg id="icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+              <rect x="6" y="4" width="4" height="16" />
+              <rect x="14" y="4" width="4" height="16" />
+            </svg>
           </button>
           <button id="btn-step-next" class="play-btn" title="Next Timestep">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 4 15 12 5 20 5 4" />
+              <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" />
+            </svg>
           </button>
         </div>
       </div>
@@ -341,7 +401,8 @@
         </div>
         <p class="sidebar-caption">
           Ranked by multi-factor urgency:
-          <span class="formula-hint" title="priority_score = 0.5*risk + 0.3*pop_norm + 0.2*(1 - road_access)">Formula (0.5R + 0.3P + 0.2A)</span>
+          <span class="formula-hint" title="priority_score = 0.5*risk + 0.3*pop_norm + 0.2*(1 - road_access)">Formula
+            (0.5R + 0.3P + 0.2A)</span>
         </p>
       </div>
 
@@ -431,7 +492,9 @@
         <!-- Action: Find Safe Route -->
         <div class="drawer-action-block">
           <button id="btn-drawer-find-route" class="warm-action-btn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
             <span>Trace Safe Evacuation Corridor</span>
           </button>
         </div>
@@ -450,7 +513,8 @@
           <div class="val-icon-badge">🛡️</div>
           <div>
             <h2>Model Grounding &amp; Acceptance Benchmarks</h2>
-            <p class="val-subtitle">Defensibility proof validating terrain physics, false-alarm mitigation, and graph routing</p>
+            <p class="val-subtitle">Defensibility proof validating terrain physics, false-alarm mitigation, and graph
+              routing</p>
           </div>
         </div>
         <div class="val-header-tags">
@@ -522,7 +586,8 @@
           <span class="lit-source">NITK/IEEE 2022 &bull; PLoS ONE 2024 Studies</span>
         </div>
         <p class="lit-text">
-          Trained weights confirm Western Ghats hydrology: monsoon precipitation volume and slope elevation dominate susceptibility, while river proximity governs flash overflow risk.
+          Trained weights confirm Western Ghats hydrology: monsoon precipitation volume and slope elevation dominate
+          susceptibility, while river proximity governs flash overflow risk.
         </p>
 
         <div class="lit-bars-grid" id="lit-bars-container">
@@ -540,7 +605,8 @@
           <span class="lit-source">GridSearchCV Tuned &bull; Scikit-Learn 1.6</span>
         </div>
         <p class="lit-text">
-          Random Forest was selected over Gradient Boosting and Logistic Regression based on superior out-of-fold generalization (0.9981 ROC-AUC) and robust resilience to physical topography anomalies.
+          Random Forest was selected over Gradient Boosting and Logistic Regression based on superior out-of-fold
+          generalization (0.9981 ROC-AUC) and robust resilience to physical topography anomalies.
         </p>
         <div style="overflow-x: auto; margin-top: 14px;">
           <table class="report-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
@@ -555,25 +621,31 @@
             </thead>
             <tbody>
               <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                <td style="padding: 10px 12px;"><strong>Random Forest (Tuned)</strong> <span style="background:rgba(37,99,235,0.25); color:#60a5fa; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700;">SELECTED</span></td>
-                <td style="padding: 10px 12px; font-weight:700; color:#34d399;" class="tab-num">0.9981 &plusmn; 0.003</td>
+                <td style="padding: 10px 12px;"><strong>Random Forest (Tuned)</strong> <span
+                    style="background:rgba(37,99,235,0.25); color:#60a5fa; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700;">SELECTED</span>
+                </td>
+                <td style="padding: 10px 12px; font-weight:700; color:#34d399;" class="tab-num">0.9981 &plusmn; 0.003
+                </td>
                 <td style="padding: 10px 12px; font-weight:700;" class="tab-num">95.8%</td>
                 <td style="padding: 10px 12px; font-weight:700;" class="tab-num">0.9619</td>
-                <td style="padding: 10px 12px; color:#cbd5e1; font-size:11.5px;">Optimal ensemble bagging; non-linear elevation suppression; 0 false alerts.</td>
+                <td style="padding: 10px 12px; color:#cbd5e1; font-size:11.5px;">Optimal ensemble bagging; non-linear
+                  elevation suppression; 0 false alerts.</td>
               </tr>
               <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
                 <td style="padding: 10px 12px;">Gradient Boosting (GBM)</td>
                 <td style="padding: 10px 12px;" class="tab-num">0.9886 &plusmn; 0.013</td>
                 <td style="padding: 10px 12px;" class="tab-num">94.4%</td>
                 <td style="padding: 10px 12px;" class="tab-num">0.9499</td>
-                <td style="padding: 10px 12px; color:#94a3b8; font-size:11.5px;">Higher variance across folds; prone to gradient overshoot on small valley samples.</td>
+                <td style="padding: 10px 12px; color:#94a3b8; font-size:11.5px;">Higher variance across folds; prone to
+                  gradient overshoot on small valley samples.</td>
               </tr>
               <tr>
                 <td style="padding: 10px 12px;">Logistic Regression (Baseline)</td>
                 <td style="padding: 10px 12px;" class="tab-num">0.9912 &plusmn; 0.006</td>
                 <td style="padding: 10px 12px;" class="tab-num">94.4%</td>
                 <td style="padding: 10px 12px;" class="tab-num">0.9475</td>
-                <td style="padding: 10px 12px; color:#94a3b8; font-size:11.5px;">Linear boundary cannot capture non-linear mountain elevation vs flash deluge dynamics.</td>
+                <td style="padding: 10px 12px; color:#94a3b8; font-size:11.5px;">Linear boundary cannot capture
+                  non-linear mountain elevation vs flash deluge dynamics.</td>
               </tr>
             </tbody>
           </table>
@@ -590,25 +662,35 @@
           <span class="lit-source">Real-Time Evaluation Endpoint</span>
         </div>
         <p class="lit-text">
-          Submit arbitrary hypothetical rainfall and topography conditions to test the live Random Forest inference engine.
+          Submit arbitrary hypothetical rainfall and topography conditions to test the live Random Forest inference
+          engine.
         </p>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 14px;">
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 14px;">
           <div>
-            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">RAINFALL VOLUME (mm)</label>
-            <input type="number" id="predict-input-rain" value="350" min="0" max="600" step="10" style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;" />
+            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">RAINFALL
+              VOLUME (mm)</label>
+            <input type="number" id="predict-input-rain" value="350" min="0" max="600" step="10"
+              style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;" />
           </div>
           <div>
-            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">TERRAIN ELEVATION (m)</label>
-            <input type="number" id="predict-input-elev" value="720" min="500" max="1500" step="10" style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;" />
+            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">TERRAIN
+              ELEVATION (m)</label>
+            <input type="number" id="predict-input-elev" value="720" min="500" max="1500" step="10"
+              style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;" />
           </div>
           <div>
-            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">RIVER DISTANCE (km)</label>
-            <input type="number" id="predict-input-dist" value="0.5" min="0.1" max="30" step="0.5" style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;" />
+            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">RIVER
+              DISTANCE (km)</label>
+            <input type="number" id="predict-input-dist" value="0.5" min="0.1" max="30" step="0.5"
+              style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;" />
           </div>
           <div>
-            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">HISTORICAL FLOOD RECORD</label>
-            <select id="predict-input-hist" style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;">
+            <label style="font-size:11px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">HISTORICAL
+              FLOOD RECORD</label>
+            <select id="predict-input-hist"
+              style="width:100%; padding:8px 10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#ffffff; font-family:'JetBrains Mono', monospace;">
               <option value="1" selected>Yes (Documented Inundation History)</option>
               <option value="0">No (Zero Previous Inundation)</option>
             </select>
@@ -616,25 +698,32 @@
         </div>
 
         <div style="margin-top: 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-          <button id="btn-run-live-predict" class="action-btn-primary" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">
+          <button id="btn-run-live-predict" class="action-btn-primary"
+            style="padding: 9px 18px; font-size: 13px; font-weight: 700;">
             <span>Run Real-Time ML Inference &rarr;</span>
           </button>
-          <button id="btn-preset-false-alarm" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; padding:8px 12px; border-radius:6px; font-size:11.5px; cursor:pointer;">
+          <button id="btn-preset-false-alarm"
+            style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; padding:8px 12px; border-radius:6px; font-size:11.5px; cursor:pointer;">
             Preset: High Rain + Ridge (False Alarm Test)
           </button>
-          <button id="btn-preset-severe-surge" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; padding:8px 12px; border-radius:6px; font-size:11.5px; cursor:pointer;">
+          <button id="btn-preset-severe-surge"
+            style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; padding:8px 12px; border-radius:6px; font-size:11.5px; cursor:pointer;">
             Preset: Valley Deluge (Disruption Test)
           </button>
         </div>
 
         <!-- Live Inference Result Output Box -->
-        <div id="predict-result-box" style="margin-top: 16px; padding: 14px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; display: none;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+        <div id="predict-result-box"
+          style="margin-top: 16px; padding: 14px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; display: none;">
+          <div
+            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
             <div style="display:flex; align-items:center; gap:8px;">
               <span id="predict-res-badge" class="risk-badge high">HIGH</span>
-              <strong style="font-size:14px; color:#ffffff;">Risk Probability: <span id="predict-res-score" class="tab-num">0.9987</span></strong>
+              <strong style="font-size:14px; color:#ffffff;">Risk Probability: <span id="predict-res-score"
+                  class="tab-num">0.9987</span></strong>
             </div>
-            <span style="font-size:11px; color:#94a3b8;">Confidence Metric: <strong id="predict-res-conf" class="tab-num" style="color:#60a5fa;">99.7%</strong></span>
+            <span style="font-size:11px; color:#94a3b8;">Confidence Metric: <strong id="predict-res-conf"
+                class="tab-num" style="color:#60a5fa;">99.7%</strong></span>
           </div>
           <div style="font-size:12px; color:#cbd5e1; line-height:1.5;">
             <strong>Hydrological Rationale:</strong> <span id="predict-res-rationale"></span>
@@ -659,12 +748,17 @@
             <span id="report-timestep-pill" class="report-step-pill">SNAPSHOT AT T1</span>
           </div>
           <h2 class="report-headline" id="report-headline">Wayanad Emergency Coordination Summary</h2>
-          <p class="report-subtitle" id="report-timestamp-str">Generated from replayed historical data &bull; Verified decision-support output</p>
+          <p class="report-subtitle" id="report-timestamp-str">Generated from replayed historical data &bull; Verified
+            decision-support output</p>
         </div>
 
         <div class="report-export-controls">
           <button id="btn-export-pdf" class="btn-export-pdf" title="Export this report to PDF using browser print">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
             <span>Export Report (PDF via print)</span>
           </button>
         </div>
@@ -711,7 +805,8 @@
         <div class="table-header-row">
           <div>
             <h3>Evacuation &amp; Relief Prioritization Schedule</h3>
-            <span class="subtle-note">Who to help first and why (Weighted formula: 0.5 Risk + 0.3 Population + 0.2 Isolation)</span>
+            <span class="subtle-note">Who to help first and why (Weighted formula: 0.5 Risk + 0.3 Population + 0.2
+              Isolation)</span>
           </div>
         </div>
 
@@ -736,8 +831,11 @@
 
       <!-- Report Footer Disclaimers -->
       <div class="report-footer-notes">
-        <p><strong>Decision Support Notice:</strong> Evacuation corridors and priority sequences are computed algorithmically to support district magistrates and emergency response teams. Sourced from authentic IMD station gauges and OpenStreetMap networks.</p>
-        <p><strong>Permanent Replayed Event Label:</strong> REPLAYED DATA &bull; August 2018 Wayanad flood event (IMD/CWC records). Not real-time live data.</p>
+        <p><strong>Decision Support Notice:</strong> Evacuation corridors and priority sequences are computed
+          algorithmically to support district magistrates and emergency response teams. Sourced from authentic IMD
+          station gauges and OpenStreetMap networks.</p>
+        <p><strong>Permanent Replayed Event Label:</strong> REPLAYED DATA &bull; August 2018 Wayanad flood event
+          (IMD/CWC records). Not real-time live data.</p>
       </div>
     </div>
   </section>
@@ -745,8 +843,10 @@
   <!-- Fallback Embedded Data (ensures 100% offline file:// compatibility) -->
   <script src="state_data.js"></script>
   <!-- Leaflet Library -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Main Application Logic -->
   <script src="app.js"></script>
 </body>
+
 </html>

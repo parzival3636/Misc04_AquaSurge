@@ -1,13 +1,13 @@
 """
-MISC-04 — Member A: FastAPI Backend
+MISC-04 — FastAPI Coordination Gateway
 Main application entry point.
+Mounts Member A and Member B routers + ML prediction and model benchmarks.
 
-Run:  uvicorn main:app --reload --port 8000   (from inside backend/)
+Run: uvicorn main:app --reload --port 8000   (from inside backend/)
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import settlements
 
 app = FastAPI(
     title="MISC-04 Coordination API",
