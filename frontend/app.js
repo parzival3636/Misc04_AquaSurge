@@ -113,6 +113,7 @@ function switchView(viewName) {
   // Show target view
   if (viewName === 'home') {
     if (viewHome) viewHome.style.display = 'flex';
+    initHero3DCanvas();
   } else if (viewName === 'processing') {
     if (viewProc) viewProc.style.display = 'flex';
     startProcessingSequence();
@@ -151,20 +152,169 @@ function populateHomeStats() {
 }
 
 function bindHomeControls() {
-  // Launch button triggers processing sequence
+  // Launch buttons trigger processing sequence
   document.getElementById('btn-launch-model')?.addEventListener('click', () => {
     switchView('processing');
   });
+  document.getElementById('btn-bottom-launch')?.addEventListener('click', () => {
+    switchView('processing');
+  });
 
-  // How this works inline expander
-  const btnToggleExplainer = document.getElementById('btn-toggle-explainer');
-  const explainerContent = document.getElementById('home-explainer-content');
-  if (btnToggleExplainer && explainerContent) {
-    btnToggleExplainer.addEventListener('click', () => {
-      const isHidden = explainerContent.style.display === 'none';
-      explainerContent.style.display = isHidden ? 'flex' : 'none';
+  // Direct jumps from homepage
+  document.getElementById('btn-hero-predict')?.addEventListener('click', () => {
+    switchView('validation');
+    setTimeout(() => {
+      document.getElementById('predict-input-rain')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+  });
+
+  document.getElementById('btn-hero-sitrep')?.addEventListener('click', () => {
+    switchView('report');
+  });
+
+  document.getElementById('btn-quick-val-link')?.addEventListener('click', () => {
+    switchView('validation');
+  });
+
+  document.getElementById('btn-quick-report-link')?.addEventListener('click', () => {
+    switchView('report');
+  });
+
+  // Start 3D Hero Canvas Animation
+  initHero3DCanvas();
+}
+
+// 3D Topographic Canvas Simulation (Ensures instant 3D visuals & offline responsiveness)
+let heroAnimId = null;
+function initHero3DCanvas() {
+  const canvas = document.getElementById('home-hero-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const width = canvas.width = canvas.offsetWidth || 540;
+  const height = canvas.height = canvas.offsetHeight || 420;
+
+  let mouseX = width / 2;
+  let mouseY = height / 2;
+  let angleX = 0;
+  let angleY = 0;
+
+  canvas.parentElement?.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+  });
+
+  const cols = 20;
+  const rows = 16;
+  let time = 0;
+
+  function render3D() {
+    ctx.clearRect(0, 0, width, height);
+
+    // Smooth tilt interpolation based on mouse position
+    const targetAngleX = (mouseX / width - 0.5) * 0.45;
+    const targetAngleY = (mouseY / height - 0.5) * 0.35;
+    angleX += (targetAngleX - angleX) * 0.05;
+    angleY += (targetAngleY - angleY) * 0.05;
+
+    time += 0.025;
+
+    const grid = [];
+    const cellW = width * 0.9 / cols;
+    const cellH = height * 0.75 / rows;
+    const originX = width * 0.05;
+    const originY = height * 0.15;
+
+    // Calculate 3D points with elevation wave & river valley depression
+    for (let r = 0; r < rows; r++) {
+      grid[r] = [];
+      for (let c = 0; c < cols; c++) {
+        const u = c / (cols - 1);
+        const v = r / (rows - 1);
+
+        // Valley along center (Kabini river basin)
+        const riverDist = Math.abs(u - 0.5);
+        const ridgeElev = Math.sin(u * Math.PI) * 45;
+        const wave = Math.sin(u * 5 + time) * Math.cos(v * 4 + time * 0.8) * 16;
+        const z = ridgeElev + wave - (1.0 - riverDist) * 20;
+
+        // 3D Isometric Projection with interactive tilt
+        const projX = originX + c * cellW + (v - 0.5) * 60 * angleX;
+        const projY = originY + r * cellH - z + (u - 0.5) * 50 * angleY;
+
+        grid[r][c] = { x: projX, y: projY, z: z };
+      }
+    }
+
+    // Draw Topographic Grid Lines
+    ctx.lineWidth = 1.2;
+    for (let r = 0; r < rows; r++) {
+      ctx.beginPath();
+      for (let c = 0; c < cols; c++) {
+        const p = grid[r][c];
+        if (c === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      const alpha = 0.15 + (r / rows) * 0.35;
+      ctx.strokeStyle = `rgba(37, 99, 235, ${alpha})`;
+      ctx.stroke();
+    }
+
+    for (let c = 0; c < cols; c += 2) {
+      ctx.beginPath();
+      for (let r = 0; r < rows; r++) {
+        const p = grid[r][c];
+        if (r === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'rgba(217, 119, 6, 0.18)';
+      ctx.stroke();
+    }
+
+    // Draw Glowing Settlement Nodes on Terrain
+    const nodes = [
+      { r: 4, c: 5, name: "Mananthavady", risk: "#dc2626" },
+      { r: 8, c: 10, name: "Kalpetta HQ", risk: "#2563eb" },
+      { r: 12, c: 14, name: "Meppadi", risk: "#d97706" },
+      { r: 6, c: 12, name: "Panamaram", risk: "#dc2626" },
+      { r: 10, c: 6, name: "Vythiri", risk: "#16a34a" },
+      { r: 3, c: 15, name: "Sulthan Bathery", risk: "#16a34a" }
+    ];
+
+    nodes.forEach(n => {
+      if (grid[n.r] && grid[n.r][n.c]) {
+        const p = grid[n.r][n.c];
+        
+        // Pulse ring
+        const pulse = (Math.sin(time * 3) + 1) * 4;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6 + pulse, 0, Math.PI * 2);
+        ctx.fillStyle = `${n.risk}22`;
+        ctx.fill();
+
+        // Node dot
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = n.risk;
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = '600 10px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(n.name, p.x + 8, p.y - 2);
+      }
     });
+
+    heroAnimId = requestAnimationFrame(render3D);
   }
+
+  if (heroAnimId) cancelAnimationFrame(heroAnimId);
+  render3D();
 }
 
 function populateNavMeta() {

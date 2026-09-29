@@ -34,3 +34,16 @@ def get_priority(timestep: str = "T1"):
         for s in st["settlements"]
     ]
     return sorted(rows, key=lambda r: r["priority_rank"])
+
+@router.get("/early-warnings")
+def early_warnings(timestep: str = "T4"):
+    """
+    Returns settlements projected to cross into HIGH risk at the next timestep,
+    based on linear trend extrapolation of the last 3 risk scores.
+    Only returns results from T3 onward (needs 3 data points to project).
+    """
+    st = get_state()
+    if timestep not in st["timesteps"]:
+        raise HTTPException(400, f"Invalid timestep '{timestep}'. Must be one of {st['timesteps']}")
+    return st["early_warnings"].get(timestep, [])
+

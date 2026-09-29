@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from routers import settlements, roads, alerts, routing, state, predict
+from routers import settlements, roads, alerts, routing, state, predict, dispatch
 
 app.include_router(settlements.router)
 app.include_router(roads.router)
@@ -32,6 +32,7 @@ app.include_router(alerts.router)
 app.include_router(routing.router)
 app.include_router(state.router)
 app.include_router(predict.router)
+app.include_router(dispatch.router)
 
 @app.get("/")
 def root():
@@ -49,8 +50,10 @@ def root():
             "GET /settlements/{settlement_id}",
             "GET /roads?timestep=T4",
             "GET /alerts?timestep=T4",
+            "GET /early-warnings?timestep=T4",
             "GET /priority?timestep=T4",
             "GET /routing/safe-route/{settlement_id}?timestep=T4",
+            "POST /dispatch/assign-units",
             "GET /settlements/meta/timesteps",
             "GET /settlements/meta/model-info",
             "GET /settlements/meta/test-scenarios",

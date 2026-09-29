@@ -25,3 +25,12 @@ LITERATURE_WEIGHTS = {
     "distance_to_river_km": 0.20,
     "historical_flood_flag": 0.15
 }
+
+# ---------- Early-warning trend projection (Part 2) ----------
+EARLY_WARNING_MIN_TIMESTEP_INDEX = 2   # need at least 3 prior points (T1, T2, T3) to project T4 onward
+EARLY_WARNING_SLOPE_THRESHOLD = 0.05   # minimum upward trend per timestep to qualify as "trending toward high"
+
+# ---------- Dynamic Unit Assignment (Part 3) ----------
+DEPOT_COORD = (11.6103, 76.0827)       # Kalpetta District HQ — real central settlement coords
+POP_BAND_THRESHOLDS = [20000, 40000]   # <20k = 1 unit-weight, <40k = 2, else 3
+RISK_BAND_UNITS = {"medium": 1, "high": 2}
