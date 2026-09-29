@@ -48,7 +48,7 @@ def predict_hazard(input_data: PredictionInput):
             model = joblib.load(MODEL_PATH)
         else:
             raise HTTPException(500, "Trained model.pkl not found on server.")
-
+#inference and law 
     # Format input into dataframe matching trained feature names
     features = ["rainfall_mm", "elevation_m", "distance_to_river_km", "historical_flood_flag"]
     input_row = pd.DataFrame([{
