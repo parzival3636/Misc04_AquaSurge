@@ -10,11 +10,14 @@
 
 ---
 
-## 📌 Quick Reference for Presentation & PPT Creators
-> **Notice for Pitch Deck & PPT Designers**: 
-> Jump straight to **[Section 10: Slide-by-Slide PPT Presentation Blueprint](#10-slide-by-slide-ppt-presentation-blueprint)** for copy-paste slide titles, concise bullet points, recommended visual layouts, and judge-facing speaker notes.
+# Website:
+<img width="1913" height="1021" alt="image" src="https://github.com/user-attachments/assets/07de1d01-f757-41ef-ace4-ac0d21b912bf" />
 
----
+<img width="1917" height="972" alt="image" src="https://github.com/user-attachments/assets/58d75679-f741-47bc-b0a5-8b95a8623371" />
+<img width="1361" height="852" alt="image" src="https://github.com/user-attachments/assets/e2b6199e-7010-46a6-9e05-aa85400517a5" />
+<img width="1915" height="967" alt="image" src="https://github.com/user-attachments/assets/94457b37-7171-4b2f-a004-8fed3b030585" />
+
+
 
 ## 1. Executive Summary
 
