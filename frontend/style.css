@@ -2577,6 +2577,483 @@ body, html {
 }
 
 /* ==========================================================================
+   Dynamic Unit Dispatch & Fleet Allocation Styles
+   ========================================================================== */
+.tab-dispatch-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* Floating Dispatch Map Pill (Top-Right on GIS Map) */
+.dispatch-map-pill {
+  position: absolute;
+  top: 64px;
+  right: 380px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: rgba(255, 254, 250, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(80, 65, 45, 0.16);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(40, 30, 15, 0.12);
+  transition: all 0.2s ease;
+}
+
+@media (max-width: 1200px) {
+  .dispatch-map-pill {
+    right: 20px;
+    top: 60px;
+  }
+}
+
+.d-pill-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.d-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  box-shadow: 0 0 10px #3b82f6;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+.d-pill-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent-navy);
+}
+
+.d-pill-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 10px;
+}
+
+.d-pill-stat {
+  font-size: 11.5px;
+  color: #4b5563;
+}
+
+.d-pill-stat strong {
+  font-family: var(--font-mono);
+  color: var(--accent-navy);
+}
+
+.action-btn-dispatch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  font-family: var(--font-main);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+}
+
+.action-btn-dispatch:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+/* Dispatch Drawer (Slides in from right) */
+.dispatch-drawer {
+  position: absolute;
+  top: 56px;
+  right: 16px;
+  bottom: 16px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  z-index: 1050;
+  background: rgba(255, 254, 250, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(80, 65, 45, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(40, 30, 15, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.d-title-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dispatch-badge-icon {
+  font-size: 24px;
+}
+
+.dispatch-config-card {
+  background: #ffffff;
+}
+
+.hq-coord-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--accent-navy);
+  background: rgba(30, 58, 138, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.unit-stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.unit-counter-box {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.unit-step-btn {
+  background: #ffffff;
+  border: none;
+  width: 38px;
+  height: 40px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.unit-step-btn:hover {
+  background: var(--accent-navy);
+  color: #ffffff;
+}
+
+.unit-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+  min-width: 80px;
+}
+
+.unit-number-val {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent-navy);
+  line-height: 1;
+}
+
+.unit-label-sub {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.unit-presets-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-preset-unit {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-preset-unit:hover {
+  border-color: var(--accent-navy);
+  color: var(--accent-navy);
+}
+
+.btn-preset-unit.active {
+  background: var(--accent-navy);
+  color: #ffffff;
+  border-color: var(--accent-navy);
+  box-shadow: 0 2px 6px rgba(30, 58, 138, 0.25);
+}
+
+.dispatch-action-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.dispatch-execute-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  font-family: var(--font-main);
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+}
+
+.dispatch-execute-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+}
+
+.dispatch-execute-btn:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dispatch-execute-btn .spin-icon {
+  animation: spinLoader 0.8s linear infinite;
+}
+
+@keyframes spinLoader {
+  to { transform: rotate(360deg); }
+}
+
+.dispatch-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.dispatch-toggle-label input[type="checkbox"] {
+  accent-color: #2563eb;
+  width: 15px;
+  height: 15px;
+}
+
+/* Dispatch KPIs */
+.dispatch-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.d-kpi-box {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.d-kpi-box.highlight {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.d-kpi-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.d-kpi-val {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--accent-navy);
+}
+
+.d-kpi-box.highlight .d-kpi-val {
+  color: #059669;
+}
+
+.d-kpi-sub {
+  font-size: 9.5px;
+  color: #64748b;
+}
+
+/* Dispatch Table */
+.dispatch-table-wrap {
+  max-height: 280px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.dispatch-roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.dispatch-roster-table th {
+  background: #f8fafc;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.dispatch-roster-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(70, 55, 35, 0.05);
+  color: var(--text-primary);
+}
+
+.dispatch-row-interactive {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dispatch-row-interactive:hover {
+  background: #f1f5f9;
+}
+
+.dispatch-status-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dispatch-status-badge.full {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.dispatch-status-badge.partial {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.dispatch-status-badge.unassigned {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Depot Animated Map Marker */
+.depot-marker-pulse {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+.depot-beacon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.4);
+  animation: depotBeacon 2s infinite ease-out;
+}
+
+@keyframes depotBeacon {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* Dispatch Route Polyline Pulse Effect */
+.dispatch-route-animated {
+  stroke-dasharray: 8, 8;
+  animation: dispatchDash 20s linear infinite;
+}
+
+@keyframes dispatchDash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+/* Safe Evacuation Route Polyline & Haven Glow */
+.safe-route-animated {
+  stroke-dasharray: 10, 8;
+  animation: safeRouteDash 16s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.7));
+}
+
+@keyframes safeRouteDash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+.haven-beacon-pulse {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.haven-beacon {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(22, 163, 74, 0.35);
+  animation: havenBeacon 2s infinite ease-out;
+}
+
+@keyframes havenBeacon {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* ==========================================================================
    Print Styles for Clean SitRep Document Export
    ========================================================================== */
 @media print {

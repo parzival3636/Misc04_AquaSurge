@@ -55,6 +55,17 @@
         <span>Spatial Operations</span>
       </button>
 
+      <button class="nav-tab" data-view="dispatch" id="tab-dispatch">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13"></rect>
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+          <circle cx="5.5" cy="18.5" r="2.5"></circle>
+          <circle cx="18.5" cy="18.5" r="2.5"></circle>
+        </svg>
+        <span>Unit Dispatch Grid</span>
+        <span class="tab-dispatch-pill" id="nav-dispatch-pill">8 Units</span>
+      </button>
+
       <button class="nav-tab" data-view="validation" id="tab-validation">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 11l3 3L22 4" />
@@ -717,6 +728,130 @@
             <span>Trace Safe Evacuation Corridor</span>
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Floating Dispatch Quick-Action Trigger Pill (Top-Right of Map) -->
+    <div class="dispatch-map-pill glass-panel" id="dispatch-map-pill">
+      <div class="d-pill-badge-wrap">
+        <span class="d-pulse-dot"></span>
+        <span class="d-pill-title">DYNAMIC FLEET DISPATCH</span>
+      </div>
+      <div class="d-pill-content">
+        <span class="d-pill-stat"><strong id="disp-active-count">8</strong> Units Ready</span>
+        <button id="btn-open-dispatch-drawer" class="action-btn-dispatch" title="Open Dynamic Rescue Fleet Dispatcher">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+          <span>Allocate Units &amp; Roads &rarr;</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 8. Dynamic Rescue Unit Dispatch Drawer (Slide-In Glass Drawer from Right) -->
+    <div id="dispatch-modal-drawer" class="dispatch-drawer glass-panel" style="display: none;">
+      <div class="drawer-header">
+        <div class="drawer-title-block">
+          <div class="d-title-top">
+            <span class="dispatch-badge-icon">🚒</span>
+            <div>
+              <h3 class="drawer-settlement-title">Dynamic Rescue Unit Dispatch Grid</h3>
+              <span class="subtle-note">Greedy Multi-Agency Allocation &bull; Central Kalpetta HQ Depot</span>
+            </div>
+          </div>
+        </div>
+        <button id="btn-close-dispatch-drawer" class="drawer-close-btn">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        
+        <!-- Unit Selection Control Card -->
+        <div class="drawer-card dispatch-config-card">
+          <div class="card-caption">
+            <span>SELECT AVAILABLE RESPONSE FLEET CAPACITY</span>
+            <span class="hq-coord-badge" title="District Emergency Operations Center">Depot: Kalpetta HQ (11.61°N, 76.08°E)</span>
+          </div>
+
+          <div class="unit-stepper-row">
+            <div class="unit-counter-box">
+              <button id="btn-unit-minus" class="unit-step-btn" title="Decrease Units">-</button>
+              <div class="unit-display">
+                <span id="disp-unit-input" class="unit-number-val tab-num">8</span>
+                <span class="unit-label-sub">Rescue Units</span>
+              </div>
+              <button id="btn-unit-plus" class="unit-step-btn" title="Increase Units">+</button>
+            </div>
+
+            <!-- Quick Preset Buttons -->
+            <div class="unit-presets-group">
+              <button class="btn-preset-unit" data-units="4">4 Units</button>
+              <button class="btn-preset-unit active" data-units="8">8 Units</button>
+              <button class="btn-preset-unit" data-units="12">12 Units</button>
+              <button class="btn-preset-unit" data-units="16">16 Units</button>
+              <button class="btn-preset-unit" data-units="24">24 Units</button>
+            </div>
+          </div>
+
+          <!-- Allocation Trigger & Map Overlay Toggle -->
+          <div class="dispatch-action-row">
+            <button id="btn-run-greedy-dispatch" class="dispatch-execute-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Compute Greedy Allocation Algorithm &rarr;</span>
+            </button>
+
+            <label class="dispatch-toggle-label">
+              <input type="checkbox" id="toggle-dispatch-routes" checked />
+              <span>Render OSRM Dispatch Paths on GIS Map</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Live Deployment Coverage KPI Bar -->
+        <div class="dispatch-kpi-grid">
+          <div class="d-kpi-box">
+            <span class="d-kpi-title">Units Deployed</span>
+            <div class="d-kpi-val tab-num"><span id="kpi-units-used">8</span> / <span id="kpi-units-total">8</span></div>
+            <span class="d-kpi-sub" id="kpi-units-remaining">0 in reserve</span>
+          </div>
+
+          <div class="d-kpi-box">
+            <span class="d-kpi-title">At-Risk Targets</span>
+            <div class="d-kpi-val tab-num" id="kpi-targets-count">9</div>
+            <span class="d-kpi-sub">Medium &amp; High Risk</span>
+          </div>
+
+          <div class="d-kpi-box highlight">
+            <span class="d-kpi-title">Coverage Status</span>
+            <div class="d-kpi-val" id="kpi-coverage-status">PARTIAL</div>
+            <span class="d-kpi-sub" id="kpi-coverage-sub">Top priority ranks serviced</span>
+          </div>
+        </div>
+
+        <!-- Allocation Results Roster Table -->
+        <div class="drawer-card">
+          <div class="card-caption">
+            <span>PRIORITIZED SETTLEMENT DISPATCH SCHEDULE</span>
+            <span class="subtle-note">Click any settlement row to zoom &amp; inspect route</span>
+          </div>
+
+          <div class="dispatch-table-wrap">
+            <table class="dispatch-roster-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Settlement</th>
+                  <th>Risk</th>
+                  <th>Units (Alloc/Need)</th>
+                  <th>Status</th>
+                  <th>OSRM Dist</th>
+                  <th>ETA</th>
+                </tr>
+              </thead>
+              <tbody id="dispatch-table-tbody">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>

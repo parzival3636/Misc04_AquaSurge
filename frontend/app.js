@@ -14,8 +14,14 @@ let markerLayerGroup = null;
 let roadLayerGroup = null;
 let reportLayerGroup = null;
 let safeRouteLayer = null;
+let dispatchRouteLayer = null;
+let depotMarkerLayer = null;
 let autoPlayInterval = null;
 let selectedSettlementId = null;
+let availableUnits = 8;
+let dispatchRoutesVisible = true;
+let currentDispatchData = null;
+const DEPOT_COORDS = [11.6103, 76.0827]; // Kalpetta District HQ
 
 const PALETTE = {
   riskLow: '#15803d',
@@ -36,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindHomeControls();
   bindDashboardControls();
   bindDrawerControls();
+  bindDispatchControls();
   bindReportControls();
   bindPredictSandbox();
 
@@ -125,6 +132,15 @@ function switchView(viewName) {
       setTimeout(() => { map.invalidateSize(); }, 60);
     }
     renderCurrentTimestep();
+  } else if (viewName === 'dispatch') {
+    if (viewDash) viewDash.style.display = 'block';
+    if (!map) {
+      initLeafletMap();
+    } else {
+      setTimeout(() => { map.invalidateSize(); }, 60);
+    }
+    renderCurrentTimestep();
+    openDispatchDrawer();
   } else if (viewName === 'validation') {
     if (viewVal) viewVal.style.display = 'flex';
     populateValidationScreen();
@@ -554,6 +570,8 @@ function initLeafletMap() {
   markerLayerGroup = L.layerGroup().addTo(map);
   reportLayerGroup = L.layerGroup().addTo(map);
   safeRouteLayer = L.layerGroup().addTo(map);
+  dispatchRouteLayer = L.layerGroup().addTo(map);
+  depotMarkerLayer = L.layerGroup().addTo(map);
 }
 
 function renderCurrentTimestep() {
@@ -606,11 +624,15 @@ function renderCurrentTimestep() {
   renderRoads(tKey);
   renderSettlements(tKey);
   renderGroundReports(tKey);
+  renderDepotMarker();
 
   // 6. Render Alert Sidebar
   renderAlertsSidebar(tKey);
 
-  // 7. Re-calculate Safe Route if a settlement is selected
+  // 7. Update Dynamic Dispatch Schedule
+  executeGreedyDispatch(false);
+
+  // 8. Re-calculate Safe Route if a settlement is selected
   if (selectedSettlementId) {
     calculateAndRenderSafeRoute(selectedSettlementId, tKey);
     // Also update drawer if currently open
@@ -1032,7 +1054,7 @@ function bindDrawerControls() {
   document.getElementById('btn-drawer-find-route')?.addEventListener('click', () => {
     if (selectedSettlementId) {
       const tKey = appState.timesteps[currentTimestepIndex];
-      calculateAndRenderSafeRoute(selectedSettlementId, tKey);
+      calculateAndRenderSafeRoute(selectedSettlementId, tKey, true);
       // Close drawer to see map cleanly
       const drawer = document.getElementById('settlement-detail-drawer');
       if (drawer) drawer.style.display = 'none';
@@ -1041,103 +1063,139 @@ function bindDrawerControls() {
 }
 
 // ============================================================================
-// 8. Safe-Route Overlay Heuristic Engine
+// 8. Safe-Route Overlay Engine (OSRM Road-Following Stitched Corridors)
 // ============================================================================
-function calculateAndRenderSafeRoute(sourceId, tKey) {
+async function calculateAndRenderSafeRoute(sourceId, tKey, zoomToBounds = false) {
   safeRouteLayer.clearLayers();
   const infoBox = document.getElementById('safe-route-detail');
   const sourceSettlement = appState.settlements.find(s => s.id === sourceId);
 
   if (!sourceSettlement) return;
 
+  // Case 1: Settlement is already low risk
   if (sourceSettlement.risk_level[tKey] === 'low') {
     if (infoBox) {
       infoBox.innerHTML = `
-        <span style="color:${PALETTE.riskLow}; font-weight:600;">${sourceSettlement.name} is currently LOW RISK.</span>
-        Designated safe refuge zone. Outbound evacuation not required.
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#16a34a;"></span>
+          <strong style="color:#15803d; font-size:12px;">${sourceSettlement.name} is a Safe Refuge Haven</strong>
+        </div>
+        <span style="font-size:11px; color:#475569;">Currently evaluated as LOW RISK (${sourceSettlement.risk_score[tKey].toFixed(2)}). Outbound evacuation is not required.</span>
       `;
     }
     return;
   }
 
-  const openRoads = appState.roads.filter(r => r.status[tKey] === 'open');
-  const adjList = {};
-  appState.settlements.forEach(s => { adjList[s.id] = []; });
-
-  openRoads.forEach(r => {
-    adjList[r.from].push({ to: r.to, roadId: r.id, coords: r.coordinates });
-    adjList[r.to].push({ to: r.from, roadId: r.id, coords: [r.coordinates[1], r.coordinates[0]] });
-  });
-
-  const safeHavens = appState.settlements.filter(s => s.risk_level[tKey] === 'low');
-  if (safeHavens.length === 0) {
-    if (infoBox) {
-      infoBox.innerHTML = `<span style="color:${PALETTE.riskHigh}; font-weight:600;">No low-risk settlements remain in district at ${tKey}.</span> Coordinate inter-district NDRF airlift.`;
-    }
-    return;
+  // Look up precomputed / live safe route from pipeline
+  let routeData = null;
+  if (appState.safe_routes && appState.safe_routes[sourceId]) {
+    routeData = appState.safe_routes[sourceId][tKey];
   }
 
-  // BFS search
-  const queue = [{ id: sourceId, path: [sourceId], segments: [] }];
-  const visited = new Set([sourceId]);
-  let foundRoute = null;
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-    const currSettlement = appState.settlements.find(s => s.id === current.id);
-
-    if (currSettlement.risk_level[tKey] === 'low') {
-      foundRoute = current;
-      break;
-    }
-
-    for (const edge of adjList[current.id]) {
-      if (!visited.has(edge.to)) {
-        visited.add(edge.to);
-        queue.push({
-          id: edge.to,
-          path: [...current.path, edge.to],
-          segments: [...current.segments, edge.coords]
-        });
+  // Try live API if not in state or needs refresh
+  if (!routeData && routeData !== null) {
+    try {
+      const res = await fetch(`http://localhost:8000/routing/safe-route/${sourceId}?timestep=${tKey}`);
+      if (res.ok) {
+        const apiData = await res.json();
+        if (apiData.available) {
+          routeData = apiData;
+        }
       }
+    } catch (e) {
+      // offline fallback
     }
   }
 
-  if (foundRoute) {
-    const pathCoords = [];
-    foundRoute.segments.forEach(seg => {
-      pathCoords.push(seg[0]);
-      pathCoords.push(seg[1]);
+  // Case 2: Open Safe Route Found
+  if (routeData && routeData.coordinates && routeData.coordinates.length > 0) {
+    const safePoly = L.polyline(routeData.coordinates, {
+      color: '#2563eb',
+      weight: 6.0,
+      opacity: 0.95,
+      className: 'safe-route-animated',
+      lineCap: 'round',
+      lineJoin: 'round'
     });
 
-    if (pathCoords.length > 0) {
-      const safePoly = L.polyline(pathCoords, {
-        color: PALETTE.accentBlue,
-        weight: 5.5,
-        opacity: 0.95,
-        className: 'safe-route-animated'
+    const targetSettlement = appState.settlements.find(s => s.id === routeData.target_id) || { name: routeData.target_name, lat: routeData.coordinates[routeData.coordinates.length - 1][0], lng: routeData.coordinates[routeData.coordinates.length - 1][1] };
+
+    safePoly.bindTooltip(`
+      <div style="font-size:11.5px; font-family:'Plus Jakarta Sans', sans-serif; line-height:1.4;">
+        <strong style="color:#1e40af;">🛡️ SAFE EVACUATION CORRIDOR</strong><br>
+        Origin: <strong>${sourceSettlement.name}</strong> &rarr; Refuge Haven: <strong>${routeData.target_name}</strong><br>
+        Distance: <span class="tab-num" style="font-weight:700;">${routeData.distance_km} km</span> &bull; ETA: <span class="tab-num" style="font-weight:700; color:#1e40af;">${routeData.eta_min || '—'} min</span><br>
+        <span style="font-size:10px; color:#64748b;">Multi-Hop OSRM Road-Following Path</span>
+      </div>
+    `, { sticky: true, className: 'custom-map-tooltip' });
+
+    safeRouteLayer.addLayer(safePoly);
+
+    // Add Green Refuge Haven Beacon Marker at Destination
+    if (targetSettlement && targetSettlement.lat) {
+      const havenIcon = L.divIcon({
+        className: 'custom-haven-pin',
+        html: `
+          <div class="haven-beacon-pulse">
+            <div class="haven-beacon"></div>
+            <div style="position:relative; z-index:5; width:26px; height:26px; border-radius:50%; background:#16a34a; border:2px solid #ffffff; box-shadow:0 3px 10px rgba(22,163,74,0.5); display:flex; align-items:center; justify-content:center; font-size:12px; color:#ffffff;">
+              🛡️
+            </div>
+          </div>
+        `,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
       });
-      safePoly.bindTooltip(`
-        <strong>Safe Evacuation Path (${foundRoute.path.length - 1} hops)</strong><br>
-        Destination: ${appState.settlements.find(s => s.id === foundRoute.id).name} (Low Risk)
-      `, { className: 'custom-map-tooltip' });
-      safeRouteLayer.addLayer(safePoly);
+
+      const havenMarker = L.marker([targetSettlement.lat, targetSettlement.lng], { icon: havenIcon });
+      havenMarker.bindPopup(`
+        <div style="font-family:'Plus Jakarta Sans', sans-serif; font-size:12px; padding:2px;">
+          <strong style="color:#15803d; font-size:13px;">🛡️ DESIGNATED REFUGE HAVEN</strong><br>
+          <strong>${routeData.target_name}</strong> (Low Risk Zone)<br>
+          <span style="color:#475569; font-size:11px;">Open Highway Corridor Verified</span>
+        </div>
+      `);
+      safeRouteLayer.addLayer(havenMarker);
     }
 
-    const routeNames = foundRoute.path.map(id => appState.settlements.find(s => s.id === id).name);
+    // Zoom map smoothly to encompass the full evacuation corridor
+    if (zoomToBounds && map) {
+      map.fitBounds(safePoly.getBounds(), {
+        padding: [90, 90],
+        maxZoom: 13,
+        duration: 1.0
+      });
+    }
+
+    const pathNames = (routeData.path || []).map(id => appState.settlements.find(s => s.id === id)?.name || id);
+    const roadsStr = (routeData.road_ids && routeData.road_ids.length > 0) ? `Via open links: <strong>${routeData.road_ids.join(', ')}</strong>` : 'Routed strictly over open road segments';
+
     if (infoBox) {
       infoBox.innerHTML = `
-        <span style="color:${PALETTE.accentBlue}; font-weight:700;">Open Route Found (${foundRoute.path.length - 1} hops):</span><br>
-        ${routeNames.join(' &rarr; ')}<br>
-        <span style="font-size:10px; color:#94a3b8;">Routed strictly through verified open road segments.</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <strong style="color:#1e40af; font-size:12px;">Safe Corridor: ${sourceSettlement.name} &rarr; ${routeData.target_name}</strong>
+          <span style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:2px 6px; border-radius:4px;">${routeData.distance_km} km &bull; ${routeData.eta_min || '--'} min</span>
+        </div>
+        <div style="font-size:11.5px; color:#1e293b; line-height:1.4; margin-bottom:4px;">
+          <strong>Route:</strong> ${pathNames.join(' &rarr; ')}
+        </div>
+        <span style="font-size:10px; color:#64748b;">${roadsStr}</span>
       `;
     }
   } else {
+    // Case 3: Isolated settlement (no open route)
     if (infoBox) {
       infoBox.innerHTML = `
-        <span style="color:${PALETTE.riskHigh}; font-weight:700;">⚠️ No open route currently available.</span><br>
-        All outbound roads from ${sourceSettlement.name} are severed or submerged at ${tKey}. Recommend vertical evacuation / shelter-in-place.
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#dc2626;"></span>
+          <strong style="color:#dc2626; font-size:12px;">⚠️ Isolation Alert: No Open Highway Corridor</strong>
+        </div>
+        <span style="font-size:11px; color:#475569;">All outbound roads from <strong>${sourceSettlement.name}</strong> are submerged/closed at ${tKey}. Recommend vertical evacuation / localized refuge.</span>
       `;
+    }
+
+    if (zoomToBounds && map) {
+      map.setView([sourceSettlement.lat, sourceSettlement.lng], 13);
     }
   }
 }
@@ -1445,5 +1503,460 @@ function bindPredictSandbox() {
       btnRun.innerHTML = '<span>Run Real-Time ML Inference &rarr;</span>';
     }
   });
+}
+
+// ============================================================================
+// 7. Dynamic Rescue Unit Dispatch & Fleet Allocation Module (Part 3)
+// ============================================================================
+function bindDispatchControls() {
+  const btnOpen = document.getElementById('btn-open-dispatch-drawer');
+  const btnClose = document.getElementById('btn-close-dispatch-drawer');
+  const btnRunDispatch = document.getElementById('btn-run-greedy-dispatch');
+  const btnMinus = document.getElementById('btn-unit-minus');
+  const btnPlus = document.getElementById('btn-unit-plus');
+  const unitInput = document.getElementById('disp-unit-input');
+  const toggleRoutes = document.getElementById('toggle-dispatch-routes');
+
+  // Open / Close Drawer
+  btnOpen?.addEventListener('click', openDispatchDrawer);
+  btnClose?.addEventListener('click', closeDispatchDrawer);
+
+  // Stepper controls
+  btnMinus?.addEventListener('click', () => {
+    if (availableUnits > 1) {
+      availableUnits--;
+      updateUnitDisplays();
+      executeGreedyDispatch(true);
+    }
+  });
+
+  btnPlus?.addEventListener('click', () => {
+    if (availableUnits < 50) {
+      availableUnits++;
+      updateUnitDisplays();
+      executeGreedyDispatch(true);
+    }
+  });
+
+  // Preset Buttons
+  document.querySelectorAll('.btn-preset-unit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-preset-unit').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const units = parseInt(btn.dataset.units, 10);
+      if (!isNaN(units)) {
+        availableUnits = units;
+        updateUnitDisplays();
+        executeGreedyDispatch(true);
+      }
+    });
+  });
+
+  // Execute Dispatch Button
+  btnRunDispatch?.addEventListener('click', async () => {
+    // Visual: loading state
+    btnRunDispatch.disabled = true;
+    const origHTML = btnRunDispatch.innerHTML;
+    btnRunDispatch.innerHTML = `
+      <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
+      <span>⚡ Allocating Fleet...</span>
+    `;
+    btnRunDispatch.style.opacity = '0.85';
+
+    try {
+      await executeGreedyDispatch(true);
+
+      // Visual: success state
+      const assignedCount = currentDispatchData?.units_used ?? 0;
+      const targetCount = currentDispatchData?.settlements_needing_help ?? 0;
+      btnRunDispatch.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span>✓ Fleet Dispatched — ${assignedCount} Units → ${targetCount} Targets</span>
+      `;
+      btnRunDispatch.style.background = 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)';
+
+      // Auto-scroll the drawer to show the results table
+      setTimeout(() => {
+        const tableWrap = document.querySelector('.dispatch-table-wrap');
+        if (tableWrap) {
+          tableWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Brief highlight pulse on the table
+          tableWrap.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.5)';
+          setTimeout(() => { tableWrap.style.boxShadow = ''; }, 1500);
+        }
+      }, 200);
+
+      // Fit map bounds to show all dispatch routes
+      if (map && dispatchRouteLayer && dispatchRouteLayer.getLayers().length > 0) {
+        const routeBounds = dispatchRouteLayer.getBounds();
+        if (routeBounds.isValid()) {
+          map.fitBounds(routeBounds, { padding: [60, 520, 60, 60], maxZoom: 13 });
+        }
+      }
+
+      // Reset button after 3 seconds
+      setTimeout(() => {
+        btnRunDispatch.innerHTML = origHTML;
+        btnRunDispatch.style.background = '';
+        btnRunDispatch.disabled = false;
+        btnRunDispatch.style.opacity = '';
+      }, 3000);
+
+    } catch (e) {
+      console.error('Dispatch execution error:', e);
+      btnRunDispatch.innerHTML = `<span>⚠ Error — Click to Retry</span>`;
+      btnRunDispatch.style.background = 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)';
+      setTimeout(() => {
+        btnRunDispatch.innerHTML = origHTML;
+        btnRunDispatch.style.background = '';
+        btnRunDispatch.disabled = false;
+        btnRunDispatch.style.opacity = '';
+      }, 2500);
+    }
+  });
+
+  // Route Overlay Toggle
+  toggleRoutes?.addEventListener('change', (e) => {
+    dispatchRoutesVisible = e.target.checked;
+    if (currentDispatchData) {
+      renderDispatchRoutes(currentDispatchData);
+    }
+  });
+}
+
+function updateUnitDisplays() {
+  const unitInput = document.getElementById('disp-unit-input');
+  const dispActiveCount = document.getElementById('disp-active-count');
+  const navPill = document.getElementById('nav-dispatch-pill');
+
+  if (unitInput) unitInput.textContent = availableUnits;
+  if (dispActiveCount) dispActiveCount.textContent = availableUnits;
+  if (navPill) navPill.textContent = `${availableUnits} Units`;
+
+  // Highlight matching preset if applicable
+  document.querySelectorAll('.btn-preset-unit').forEach(btn => {
+    if (parseInt(btn.dataset.units, 10) === availableUnits) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function openDispatchDrawer() {
+  const drawer = document.getElementById('dispatch-modal-drawer');
+  const settlementDrawer = document.getElementById('settlement-detail-drawer');
+  if (settlementDrawer) settlementDrawer.style.display = 'none'; // Close other drawer
+  if (drawer) {
+    drawer.style.display = 'flex';
+    executeGreedyDispatch(true);
+  }
+}
+
+function closeDispatchDrawer() {
+  const drawer = document.getElementById('dispatch-modal-drawer');
+  if (drawer) drawer.style.display = 'none';
+}
+
+/**
+ * Executes the greedy unit allocation algorithm via FastAPI backend (/dispatch/assign-units)
+ * with robust client fallback calculation if offline.
+ */
+async function executeGreedyDispatch(isInteractive = false) {
+  if (!appState) return;
+  const tKey = appState.timesteps[currentTimestepIndex];
+
+  const payload = {
+    total_units: availableUnits,
+    timestep: tKey
+  };
+
+  try {
+    const res = await fetch('http://localhost:8000/dispatch/assign-units', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error(`API returned ${res.status}`);
+    const data = await res.json();
+    currentDispatchData = data;
+    renderDispatchResults(data);
+  } catch (err) {
+    console.warn('Live /dispatch/assign-units failed, executing local greedy allocation fallback:', err);
+    const data = computeLocalGreedyDispatch(availableUnits, tKey);
+    currentDispatchData = data;
+    renderDispatchResults(data);
+  }
+}
+
+/**
+ * Pure client-side Greedy Unit Allocation algorithm fallback
+ */
+function computeLocalGreedyDispatch(totalUnits, timestep) {
+  const settlements = appState.settlements || [];
+  const needingHelp = settlements
+    .filter(s => s.risk_level[timestep] === 'medium' || s.risk_level[timestep] === 'high')
+    .sort((a, b) => a.priority_rank[timestep] - b.priority_rank[timestep]);
+
+  let unitsLeft = totalUnits;
+  const assignments = [];
+
+  const popBand = (pop) => (pop < 20000 ? 1 : (pop < 40000 ? 2 : 3));
+  const riskBand = { "medium": 1, "high": 2 };
+
+  needingHelp.forEach(s => {
+    const pNeed = popBand(s.population);
+    const rNeed = riskBand[s.risk_level[timestep]] || 1;
+    const unitsNeeded = pNeed + rNeed;
+
+    if (unitsLeft <= 0) {
+      assignments.push({
+        settlement_id: s.id,
+        name: s.name,
+        priority_rank: s.priority_rank[timestep],
+        risk_level: s.risk_level[timestep],
+        risk_score: s.risk_score[timestep],
+        population: s.population,
+        units_needed: unitsNeeded,
+        units_assigned: 0,
+        status: "UNASSIGNED — insufficient fleet units",
+        distance_km: null,
+        eta_min: null,
+        route_geometry: null
+      });
+      return;
+    }
+
+    const assigned = Math.min(unitsLeft, unitsNeeded);
+    unitsLeft -= assigned;
+
+    // Approximate distance/ETA from Kalpetta HQ [11.6103, 76.0827]
+    const dLat = (s.lat - DEPOT_COORDS[0]) * 111;
+    const dLng = (s.lng - DEPOT_COORDS[1]) * 108;
+    const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 1.35; // road winding factor
+    const eta = (dist / 38) * 60; // 38 km/h mountain speed
+
+    assignments.push({
+      settlement_id: s.id,
+      name: s.name,
+      priority_rank: s.priority_rank[timestep],
+      risk_level: s.risk_level[timestep],
+      risk_score: s.risk_score[timestep],
+      population: s.population,
+      units_needed: unitsNeeded,
+      units_assigned: assigned,
+      status: assigned === unitsNeeded ? "FULLY ASSIGNED" : "PARTIALLY ASSIGNED",
+      distance_km: parseFloat(dist.toFixed(2)),
+      eta_min: parseFloat(eta.toFixed(1)),
+      route_geometry: [DEPOT_COORDS, [s.lat, s.lng]],
+      route_source: "straight_line_fallback"
+    });
+  });
+
+  return {
+    total_units: totalUnits,
+    units_used: totalUnits - unitsLeft,
+    units_remaining: unitsLeft,
+    timestep: timestep,
+    settlements_needing_help: needingHelp.length,
+    assignments: assignments,
+    fully_covered: assignments.every(a => a.status === "FULLY ASSIGNED")
+  };
+}
+
+/**
+ * Updates KPI metrics and populates the dispatch schedule table
+ */
+function renderDispatchResults(data) {
+  const kpiUsed = document.getElementById('kpi-units-used');
+  const kpiTotal = document.getElementById('kpi-units-total');
+  const kpiRem = document.getElementById('kpi-units-remaining');
+  const kpiTargets = document.getElementById('kpi-targets-count');
+  const kpiStatus = document.getElementById('kpi-coverage-status');
+  const kpiSub = document.getElementById('kpi-coverage-sub');
+  const tbody = document.getElementById('dispatch-table-tbody');
+
+  if (kpiUsed) kpiUsed.textContent = data.units_used;
+  if (kpiTotal) kpiTotal.textContent = data.total_units;
+  if (kpiRem) kpiRem.textContent = `${data.units_remaining} units in reserve`;
+  if (kpiTargets) kpiTargets.textContent = data.settlements_needing_help;
+
+  if (kpiStatus && kpiSub) {
+    if (data.fully_covered) {
+      kpiStatus.textContent = '100% COVERED';
+      kpiStatus.style.color = '#15803d';
+      kpiSub.textContent = 'All at-risk zones allocated';
+    } else if (data.units_used === 0) {
+      kpiStatus.textContent = 'ZERO FLEET';
+      kpiStatus.style.color = '#dc2626';
+      kpiSub.textContent = 'Increase available units';
+    } else {
+      kpiStatus.textContent = 'PARTIAL (PRIORITY)';
+      kpiStatus.style.color = '#b45309';
+      kpiSub.textContent = 'Greedy top ranks serviced first';
+    }
+  }
+
+  // Populate Table
+  if (tbody) {
+    tbody.innerHTML = '';
+    if (!data.assignments || data.assignments.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:16px; color:#64748b;">No settlements currently in medium/high risk at this timestep.</td></tr>`;
+      return;
+    }
+
+    data.assignments.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.className = 'dispatch-row-interactive';
+      
+      let statusClass = 'unassigned';
+      let statusLabel = 'UNASSIGNED';
+      if (a.status === 'FULLY ASSIGNED') {
+        statusClass = 'full';
+        statusLabel = 'ALLOCATED';
+      } else if (a.status === 'PARTIALLY ASSIGNED') {
+        statusClass = 'partial';
+        statusLabel = 'PARTIAL';
+      }
+
+      const riskClass = a.risk_level.toLowerCase();
+      const distStr = a.distance_km != null ? `${a.distance_km} km` : '—';
+      const etaStr = a.eta_min != null ? `${a.eta_min} min` : '—';
+
+      tr.innerHTML = `
+        <td style="font-weight:700; color:var(--accent-navy);" class="tab-num">#${a.priority_rank}</td>
+        <td><strong>${a.name}</strong></td>
+        <td><span class="risk-badge ${riskClass}">${a.risk_level.toUpperCase()}</span></td>
+        <td class="tab-num" style="font-weight:700;">${a.units_assigned} <span style="color:#64748b; font-weight:400;">/ ${a.units_needed}</span></td>
+        <td><span class="dispatch-status-badge ${statusClass}">${statusLabel}</span></td>
+        <td class="tab-num" style="color:#475569;">${distStr}</td>
+        <td class="tab-num" style="font-weight:700; color:#1e40af;">${etaStr}</td>
+      `;
+
+      // Click to inspect route on map
+      tr.addEventListener('click', () => {
+        const s = appState.settlements.find(item => item.id === a.settlement_id);
+        if (s && map) {
+          map.setView([s.lat, s.lng], 13);
+          // Highlight this settlement
+          openSettlementDrawer(s.id);
+        }
+      });
+
+      tbody.appendChild(tr);
+    });
+
+    // Scroll the drawer body so the table card is visible
+    const drawerBody = document.querySelector('#dispatch-modal-drawer .drawer-body');
+    const tableCard = tbody.closest('.drawer-card');
+    if (drawerBody && tableCard) {
+      setTimeout(() => {
+        drawerBody.scrollTo({ top: drawerBody.scrollHeight, behavior: 'smooth' });
+        // Flash highlight
+        tableCard.style.transition = 'box-shadow 0.3s ease';
+        tableCard.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.45)';
+        setTimeout(() => { tableCard.style.boxShadow = ''; }, 1400);
+      }, 120);
+    }
+  }
+
+  // Draw routes on map
+  renderDispatchRoutes(data);
+}
+
+/**
+ * Draws the real road dispatch paths from Kalpetta HQ to all assigned targets on the Leaflet map
+ */
+function renderDispatchRoutes(data) {
+  if (!dispatchRouteLayer) return;
+  dispatchRouteLayer.clearLayers();
+
+  if (!dispatchRoutesVisible || !data || !data.assignments) {
+    // Even if routes hidden, still fit map to assigned settlements
+    if (map && data && data.assignments) {
+      const assigned = data.assignments.filter(a => a.units_assigned > 0 && a.route_geometry);
+      if (assigned.length > 0) {
+        const coords = assigned.flatMap(a => a.route_geometry);
+        const bounds = L.latLngBounds(coords);
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [60, 520, 60, 60], maxZoom: 13 });
+        }
+      }
+    }
+    return;
+  }
+
+  data.assignments.forEach(a => {
+    if (a.units_assigned > 0 && a.route_geometry && a.route_geometry.length > 0) {
+      const polyline = L.polyline(a.route_geometry, {
+        color: '#0284c7',
+        weight: 4.5,
+        opacity: 0.9,
+        dashArray: '8, 8',
+        className: 'dispatch-route-animated',
+        lineCap: 'round',
+        lineJoin: 'round'
+      });
+
+      polyline.bindTooltip(`
+        <div style="font-size:11.5px; font-family:'Plus Jakarta Sans', sans-serif;">
+          <strong style="color:#0369a1;">🚒 DISPATCHED: ${a.units_assigned} Unit(s)</strong><br>
+          Target: <strong>${a.name}</strong> (Priority Rank #${a.priority_rank})<br>
+          Driving Dist: <span class="tab-num">${a.distance_km} km</span> &bull; ETA: <span class="tab-num" style="font-weight:700; color:#0369a1;">${a.eta_min} min</span>
+        </div>
+      `, { sticky: true });
+
+      polyline.addTo(dispatchRouteLayer);
+    }
+  });
+
+  // Fit map to show all drawn dispatch routes (right-padding accounts for the 480px drawer)
+  if (map && dispatchRouteLayer.getLayers().length > 0) {
+    try {
+      const bounds = dispatchRouteLayer.getBounds();
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [60, 520, 60, 60], maxZoom: 13 });
+      }
+    } catch (_) {}
+  }
+}
+
+/**
+ * Places the central Emergency Operations Center / Depot marker at Kalpetta
+ */
+function renderDepotMarker() {
+  if (!depotMarkerLayer) return;
+  depotMarkerLayer.clearLayers();
+
+  const depotIcon = L.divIcon({
+    className: 'custom-depot-pin',
+    html: `
+      <div class="depot-marker-pulse">
+        <div class="depot-beacon"></div>
+        <div style="position:relative; z-index:5; width:28px; height:28px; border-radius:50%; background:#1e3a8a; border:2px solid #ffffff; box-shadow:0 3px 12px rgba(30,58,138,0.5); display:flex; align-items:center; justify-content:center; font-size:14px;">
+          🏢
+        </div>
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+
+  const marker = L.marker(DEPOT_COORDS, { icon: depotIcon });
+  marker.bindPopup(`
+    <div style="font-family:'Plus Jakarta Sans', sans-serif; font-size:12px; padding:2px;">
+      <strong style="color:#1e3a8a; font-size:13px;">🚨 DISTRICT RESCUE OPERATIONS HQ</strong><br>
+      <span style="color:#64748b;">Central Fleet Depot &bull; Kalpetta</span><br>
+      <span style="font-size:11px; font-family:'JetBrains Mono', monospace; color:#3b82f6;">Coordinates: 11.6103°N, 76.0827°E</span><br>
+      <span style="display:inline-block; margin-top:4px; font-size:11px; font-weight:700; color:#15803d;">Active Units: ${availableUnits} Total Fleet</span>
+    </div>
+  `);
+
+  marker.addTo(depotMarkerLayer);
 }
 
